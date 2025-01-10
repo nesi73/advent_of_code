@@ -85,7 +85,7 @@ def rotate_guard(guard):
         return "<"
     return "^"
 
-def algorithm(board, guard, pos, positions_guard, loop):
+def algorithm(board, guard, pos, positions_guard, positions_stops, loop):
     new_pos = move_guard(guard, pos)
 
     if board[new_pos[0]][new_pos[1]] == ".":
@@ -102,7 +102,7 @@ def algorithm(board, guard, pos, positions_guard, loop):
         guard = rotate_guard(guard)
         board[pos[0]][pos[1]] = guard
         new_pos = pos 
-    algorithm(board, guard, new_pos, positions_guard, loop)
+    algorithm(board, guard, new_pos, positions_guard, positions_stops, loop)
 
 def add_obstable(board, pos):
     copy_board = copy.deepcopy(board)
@@ -112,17 +112,31 @@ def add_obstable(board, pos):
 def possible_obstruction_positions(board, free="."):
     return np.where(np.array(board) == free)
 
-import time
-start = time.time()
-matrix = read_file()
-pos_initial_guard, guard = find_guard(matrix)
-loop = []
-obstructions = possible_obstruction_positions(matrix)
 
-for idx_obs in range(len(obstructions[0])):
+from concurrent.futures import ProcessPoolExecutor, as_completed
+# Para procesamiento paralelo usa ProcessPoolExecutor en lugar de ThreadPoolExecutor
+
+def worker(idx_obs, pos_initial_guard, guard, matrix, obstructions, loop):
+    # Función que ejecuta la tarea para un índice específico
     positions_guard = [pos_initial_guard]
     new_obstacle_matrix = add_obstable(matrix, [obstructions[0][idx_obs], obstructions[1][idx_obs]])
     positions_stops = find_stops(new_obstacle_matrix)
-    algorithm(new_obstacle_matrix, guard, pos_initial_guard, positions_guard, loop)
-print(len(loop))
-print(time.time() - start)
+    algorithm(new_obstacle_matrix, guard, pos_initial_guard, positions_guard, positions_stops, loop)
+
+if __name__ == "__main__":
+    import os
+    from concurrent.futures import ProcessPoolExecutor
+    
+    import time
+    start = time.time()
+    matrix = read_file()
+    pos_initial_guard, guard = find_guard(matrix)
+    loop = []
+    obstructions = possible_obstruction_positions(matrix)
+
+    print(os.cpu_count())
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+        futures = [executor.submit(worker, idx_obs, pos_initial_guard, guard, matrix, obstructions, loop) for idx_obs in range(len(obstructions[0]))]
+
+    print(len(loop))
+    print(time.time() - start)
