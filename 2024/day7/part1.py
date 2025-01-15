@@ -3,7 +3,7 @@ import sys
 from itertools import product
 import numpy as np
 
-OPERATIONS_TYPE = ["+", "-", "*", "/"]
+OPERATIONS_TYPE = ["+", "*"]
 
 def read_file():
     lines = open(sys.argv[1]).read().strip()
@@ -16,23 +16,9 @@ def read_file():
     return operations
 
 def generate_possibilities(n, numbers, solution):
-    only_mul = False
-    
-    if int(solution) > np.array(numbers).astype(int).sum():
-        only_mul = True 
-    
     return list(product(OPERATIONS_TYPE, repeat=n))
 
-    _lists = []
-    for l in lists:
-        if "*" in l:
-            _lists.append(l)
-    print("---------------------")
-    print(len(lists))
-    print(len(_lists))
-    print("---------------------")
-    return _lists
-    
+   
 def calculate_operation(number1, number2, str_operation):
     if str_operation == "+":
         return number1 + number2
@@ -53,7 +39,6 @@ result = 0
 for operation in operations:
     list_ = generate_possibilities(len(operation[1]) - 1, operation[1], operation[0])
     
-    continue    
     for l in list_:
         if is_correct(operation[0], operation[1], l):
             result += int(operation[0])
